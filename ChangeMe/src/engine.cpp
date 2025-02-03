@@ -118,6 +118,9 @@ Engine::Engine() : m_Window("Vulkan", 1920, 1080)
     m_RenderFinishedSemaphoreID = l_Device.createSemaphore();
     m_InFlightFenceID = l_Device.createFence(true);
 
+    
+    m_Window.getResizedSignal().connect(this, &Engine::recreateSwapchain);
+
     initImgui();
 }
 
@@ -149,6 +152,10 @@ void Engine::run()
     while (!m_Window.shouldClose())
     {
         m_Window.pollEvents();
+        if (m_Window.isMinimized())
+        {
+            continue;
+        }
 
         l_InFlightFence.wait();
         l_InFlightFence.reset();
@@ -264,6 +271,27 @@ void Engine::createPipelines()
     l_Builder.addShaderStage(l_VertexShader);
     l_Builder.addShaderStage(l_FragmentShader);
 	m_GraphicsPipelineID = l_Device.createPipeline(l_Builder, l_Layout, m_RenderPassID, 0);
+}
+
+void Engine::recreateSwapchain(const VkExtent2D p_NewSize)
+{
+    Logger::pushContext("Recreate Swapchain");
+    VulkanDevice& l_Device = VulkanContext::getDevice(m_DeviceID);
+    l_Device.waitIdle();
+
+    VulkanSwapchainExtension* swapchainExtension = VulkanSwapchainExtension::get(l_Device);
+
+    m_SwapchainID = swapchainExtension->createSwapchain(m_Window.getSurface(), p_NewSize, swapchainExtension->getSwapchain(m_SwapchainID).getFormat(), m_SwapchainID);
+
+    VulkanSwapchain& l_Swapchain = swapchainExtension->getSwapchain(m_SwapchainID);
+
+    for (uint32_t i = 0; i < l_Swapchain.getImageCount(); ++i)
+    {
+        const VkImageView l_Color = *l_Swapchain.getImage(i).getImageView(l_Swapchain.getImageView(i));
+        const std::vector<VkImageView> l_Attachments = { l_Color, *l_Device.getImage(m_DepthBuffer).getImageView(m_DepthBufferView) };
+        m_FramebufferIDs[i] = VulkanContext::getDevice(m_DeviceID).createFramebuffer({ l_Swapchain.getExtent().width, l_Swapchain.getExtent().height, 1 }, m_RenderPassID, l_Attachments);
+    }
+    Logger::popContext();
 }
 
 void Engine::initImgui() const

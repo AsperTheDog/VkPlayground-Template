@@ -16,6 +16,8 @@ private:
     void createRenderPasses();
     void createPipelines();
 
+    void recreateSwapchain(VkExtent2D p_NewSize);
+
     SDLWindow m_Window;
 
     QueueSelection m_GraphicsQueuePos;

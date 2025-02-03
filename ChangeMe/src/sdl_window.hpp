@@ -31,6 +31,7 @@ public:
 	[[nodiscard]] bool shouldClose() const;
 	[[nodiscard]] std::vector<const char*> getRequiredVulkanExtensions() const;
 	[[nodiscard]] WindowSize getSize() const;
+    [[nodiscard]] bool isMinimized() const;
 
 	void pollEvents();
 	void toggleMouseCapture();
@@ -72,6 +73,7 @@ private:
 	float m_Delta = 0.f;
 
 	bool m_MouseCaptured = false;
+    bool m_Minimized = false;
 
 	friend class Surface;
 	friend class VulkanGPU;

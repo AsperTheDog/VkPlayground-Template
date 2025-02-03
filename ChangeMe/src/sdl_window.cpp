@@ -66,6 +66,11 @@ SDLWindow::WindowSize SDLWindow::getSize() const
     return { width, height };
 }
 
+bool SDLWindow::isMinimized() const
+{
+    return m_Minimized;
+}
+
 void SDLWindow::pollEvents()
 {
     SDL_Event event;
@@ -76,7 +81,12 @@ void SDLWindow::pollEvents()
         {
         case SDL_WINDOWEVENT:
             if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED && event.window.data1 > 0 && event.window.data2 > 0)
+            {
                 m_ResizeSignal.emit(WindowSize {event.window.data1, event.window.data2}.toExtent2D());
+                m_Minimized = false;
+            }
+            else if (event.window.event == SDL_WINDOWEVENT_MINIMIZED)
+                m_Minimized = true;
             break;
         case SDL_MOUSEMOTION:
             m_MouseMoved.emit(event.motion.xrel, event.motion.yrel);
