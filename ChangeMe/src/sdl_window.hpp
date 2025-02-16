@@ -29,9 +29,11 @@ public:
 
 
 	[[nodiscard]] bool shouldClose() const;
-	[[nodiscard]] std::vector<const char*> getRequiredVulkanExtensions() const;
+    [[nodiscard]] uint32_t getRequiredVulkanExtensionCount() const;
 	[[nodiscard]] WindowSize getSize() const;
     [[nodiscard]] bool isMinimized() const;
+
+    void getRequiredVulkanExtensions(const char* p_Container[]) const;
 
 	void pollEvents();
 	void toggleMouseCapture();
