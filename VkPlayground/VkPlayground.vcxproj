@@ -112,7 +112,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>spirv-cross-cored.lib;spirv-cross-glsld.lib;volkd.lib;shaderc_combinedd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>slangd.lib;volkd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
@@ -134,7 +134,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
     <Lib>
-      <AdditionalDependencies>spirv-cross-core.lib;spirv-cross-glsl.lib;volk.lib;shaderc_combined.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>slang.lib;volk.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(VULKAN_SDK)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
@@ -146,8 +146,10 @@
     <ClInclude Include="submodule\include\ext\vulkan_shader_clock.hpp" />
     <ClInclude Include="submodule\include\ext\vulkan_swapchain.hpp" />
     <ClInclude Include="submodule\include\utils\allocators.hpp" />
+    <ClInclude Include="submodule\include\utils\call_on_destroy.hpp" />
     <ClInclude Include="submodule\include\utils\identifiable.hpp" />
     <ClInclude Include="submodule\include\utils\logger.hpp" />
+    <ClInclude Include="submodule\include\utils\shader_reflection.hpp" />
     <ClInclude Include="submodule\include\utils\signal.hpp" />
     <ClInclude Include="submodule\include\utils\string_utils.hpp" />
     <ClInclude Include="submodule\include\vulkan_binding.hpp" />
@@ -175,6 +177,7 @@
     <ClCompile Include="submodule\src\ext\vulkan_shader_clock.cpp" />
     <ClCompile Include="submodule\src\ext\vulkan_swapchain.cpp" />
     <ClCompile Include="submodule\src\logger.cpp" />
+    <ClCompile Include="submodule\src\volk_loader.cpp" />
     <ClCompile Include="submodule\src\vulkan_binding.cpp" />
     <ClCompile Include="submodule\src\vulkan_buffer.cpp" />
     <ClCompile Include="submodule\src\vulkan_command_buffer.cpp" />

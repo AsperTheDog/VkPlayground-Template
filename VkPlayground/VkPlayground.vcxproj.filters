@@ -93,6 +93,12 @@
     <ClInclude Include="submodule\include\utils\string_utils.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="submodule\include\utils\call_on_destroy.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="submodule\include\utils\shader_reflection.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="submodule\src\ext\vulkan_acceleration_structure.cpp">
@@ -162,6 +168,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="submodule\src\allocators.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="submodule\src\volk_loader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

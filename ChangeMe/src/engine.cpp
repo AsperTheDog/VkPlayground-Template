@@ -19,9 +19,9 @@
 #include "utils/logger.hpp"
 
 constexpr std::array<Vertex, 3> vertices = {
-    Vertex{ { 0.0f, -0.5f, 0.0f }, { 255, 0, 0 } },
-    Vertex{ { 0.5f, 0.5f, 0.0f },  { 0, 255, 0 } },
-    Vertex{ { -0.5f, 0.5f, 0.0f }, { 0, 0, 255 } }
+    Vertex{ {  0.0f, -0.5f, 0.0f }, { 255,   0,   0 } },
+    Vertex{ {  0.5f,  0.5f, 0.0f }, {   0, 255,   0 } },
+    Vertex{ { -0.5f,  0.5f, 0.0f }, {   0,   0, 255 } }
 };
 
 constexpr std::array<uint16_t, 3> indices = { 0, 1, 2 };
@@ -89,7 +89,7 @@ Engine::Engine() : m_Window("Vulkan", 1920, 1080)
 
     // Swapchain
     VulkanSwapchainExtension* l_SwapchainExt = VulkanSwapchainExtension::get(m_DeviceID);
-    m_SwapchainID = l_SwapchainExt->createSwapchain(m_Window.getSurface(), m_Window.getSize().toExtent2D(), { VK_FORMAT_R8G8B8A8_SRGB, VK_COLORSPACE_SRGB_NONLINEAR_KHR });
+    m_SwapchainID = l_SwapchainExt->createSwapchain(m_Window.getSurface(), m_Window.getSize().toExtent2D(), { VK_FORMAT_R8G8B8A8_SRGB, VK_COLORSPACE_SRGB_NONLINEAR_KHR }, VK_PRESENT_MODE_FIFO_KHR);
     VulkanSwapchain& l_Swapchain = l_SwapchainExt->getSwapchain(m_SwapchainID);
 
     // Command Buffers
@@ -102,19 +102,47 @@ Engine::Engine() : m_Window("Vulkan", 1920, 1080)
     VulkanImage& l_DepthImage = l_Device.getImage(m_DepthBuffer);
     l_DepthImage.allocateFromFlags({ VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, false });
     m_DepthBufferView = l_DepthImage.createImageView(VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT);
-
-    // Vertex Buffer
+    
     l_Device.configureStagingBuffer(5LL * 1024 * 1024, m_TransferQueuePos);
-    m_VertexBufferID = l_Device.createBuffer(sizeof(vertices), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, m_TransferQueuePos.familyIndex);
-    VulkanBuffer& l_VertexBuffer = l_Device.getBuffer(m_VertexBufferID);
-    l_VertexBuffer.allocateFromFlags({ VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, false });
-    l_Device.dumpDataIntoBuffer(m_VertexBufferID, reinterpret_cast<const uint8_t*>(vertices.data()), sizeof(vertices), 0);
 
-    // Index Buffer
-    m_IndexBufferID = l_Device.createBuffer(sizeof(indices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, m_TransferQueuePos.familyIndex);
-    VulkanBuffer& l_IndexBuffer = l_Device.getBuffer(m_IndexBufferID);
-    l_IndexBuffer.allocateFromFlags({ VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, false });
-    l_Device.dumpDataIntoBuffer(m_IndexBufferID, reinterpret_cast<const uint8_t*>(indices.data()), sizeof(indices), 0);
+    // Dump Data
+    {
+        ResourceID l_FenceID = l_Device.createFence(false);
+        VulkanFence& l_Fence = l_Device.getFence(l_FenceID);
+
+        const ResourceID l_OneTimeTransferCmdBufferID = l_Device.createCommandBuffer(l_TransferQueueFamily, 0, false);
+        VulkanCommandBuffer& l_CmdBuffer = l_Device.getCommandBuffer(l_OneTimeTransferCmdBufferID, 0);
+        
+        // Vertex Buffer
+        m_VertexBufferID = l_Device.createBuffer(sizeof(vertices), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, m_TransferQueuePos.familyIndex);
+        VulkanBuffer& l_VertexBuffer = l_Device.getBuffer(m_VertexBufferID);
+        l_VertexBuffer.allocateFromFlags({ VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, false });
+
+        l_CmdBuffer.beginRecording();
+        l_CmdBuffer.ecmdDumpDataIntoBuffer(m_VertexBufferID, reinterpret_cast<const uint8_t*>(vertices.data()), sizeof(vertices));
+        l_CmdBuffer.endRecording();
+        l_CmdBuffer.submit(l_Device.getQueue(m_TransferQueuePos), {}, {}, l_FenceID);
+        
+        // Index Buffer
+        m_IndexBufferID = l_Device.createBuffer(sizeof(indices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, m_TransferQueuePos.familyIndex);
+        VulkanBuffer& l_IndexBuffer = l_Device.getBuffer(m_IndexBufferID);
+        l_IndexBuffer.allocateFromFlags({ VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, false });
+
+        l_Fence.wait();
+        l_Fence.reset();
+
+        l_CmdBuffer.reset();
+        l_CmdBuffer.beginRecording();
+        l_CmdBuffer.ecmdDumpDataIntoBuffer(m_IndexBufferID, reinterpret_cast<const uint8_t*>(indices.data()), sizeof(indices));
+        l_CmdBuffer.endRecording();
+        l_CmdBuffer.submit(l_Device.getQueue(m_TransferQueuePos), {}, {}, l_FenceID);
+
+        l_Fence.wait();
+
+        //Free resources
+        l_Device.freeCommandBuffer(l_OneTimeTransferCmdBufferID, 0);
+        l_Device.freeFence(l_Fence);
+    }
 
     // Renderpass and pipelines
     createRenderPasses();
@@ -262,7 +290,7 @@ void Engine::createRenderPasses()
     l_Builder.addAttachment(l_DepthAttachment);
 
     const std::array<VulkanRenderPassBuilder::AttachmentReference, 2> l_ColorReferences = {{{COLOR, 0}, {DEPTH_STENCIL, 1}}};
-    l_Builder.addSubpass(VK_PIPELINE_BIND_POINT_GRAPHICS, l_ColorReferences, 0);
+    l_Builder.addSubpass(l_ColorReferences, 0);
 
     m_RenderPassID = VulkanContext::getDevice(m_DeviceID).createRenderPass(l_Builder, 0);
     Logger::popContext();
@@ -273,9 +301,17 @@ void Engine::createPipelines()
     VulkanDevice& l_Device = VulkanContext::getDevice(m_DeviceID);
 
 	const uint32_t l_Layout = l_Device.createPipelineLayout({}, {});
+    
+#ifndef _DEBUG
+    VulkanShader l_Shader{0, false};
+#else
+    VulkanShader l_Shader{0, true};
+#endif
+    l_Shader.loadModule("shaders/shader.slang", "main");
+    l_Shader.linkAndFinalize();
 
-	const uint32_t l_VertexShader = l_Device.createShader("shaders/shader.vert", VK_SHADER_STAGE_VERTEX_BIT, false, {});
-	const uint32_t l_FragmentShader = l_Device.createShader("shaders/shader.frag", VK_SHADER_STAGE_FRAGMENT_BIT, false, {});
+	const ResourceID l_VertexShader = l_Device.createShaderModule(l_Shader, VK_SHADER_STAGE_VERTEX_BIT);
+	const ResourceID l_FragmentShader = l_Device.createShaderModule(l_Shader, VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VkPipelineColorBlendAttachmentState l_ColorBlendAttachment{};
 	l_ColorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
@@ -288,7 +324,7 @@ void Engine::createPipelines()
     std::array<VkDynamicState, 2> l_DynamicStates = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
 
 	VulkanPipelineBuilder l_Builder{ m_DeviceID };
-    l_Builder.addVertexBinding(l_Binding);
+    l_Builder.addVertexBinding(l_Binding, true);
 	l_Builder.setInputAssemblyState(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_FALSE);
 	l_Builder.setViewportState(1, 1);
 	l_Builder.setRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE);
@@ -300,6 +336,9 @@ void Engine::createPipelines()
     l_Builder.addShaderStage(l_VertexShader);
     l_Builder.addShaderStage(l_FragmentShader);
 	m_GraphicsPipelineID = l_Device.createPipeline(l_Builder, l_Layout, m_RenderPassID, 0);
+
+    l_Device.freeShaderModule(l_VertexShader);
+    l_Device.freeShaderModule(l_FragmentShader);
 }
 
 void Engine::recreateSwapchain(const VkExtent2D p_NewSize)
@@ -310,7 +349,7 @@ void Engine::recreateSwapchain(const VkExtent2D p_NewSize)
 
     VulkanSwapchainExtension* swapchainExtension = VulkanSwapchainExtension::get(l_Device);
 
-    m_SwapchainID = swapchainExtension->createSwapchain(m_Window.getSurface(), p_NewSize, swapchainExtension->getSwapchain(m_SwapchainID).getFormat(), m_SwapchainID);
+    m_SwapchainID = swapchainExtension->createSwapchain(m_Window.getSurface(), p_NewSize, swapchainExtension->getSwapchain(m_SwapchainID).getFormat(), VK_PRESENT_MODE_FIFO_KHR, m_SwapchainID);
 
     VulkanSwapchain& l_Swapchain = swapchainExtension->getSwapchain(m_SwapchainID);
 
