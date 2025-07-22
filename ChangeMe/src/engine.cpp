@@ -83,7 +83,7 @@ Engine::Engine() : m_Window("Vulkan", 1920, 1080)
 
     // Logical Device
     VulkanDeviceExtensionManager l_Extensions{};
-    l_Extensions.addExtension(VK_KHR_SWAPCHAIN_EXTENSION_NAME, new VulkanSwapchainExtension(m_DeviceID));
+    l_Extensions.addExtension(new VulkanSwapchainExtension(m_DeviceID));
     m_DeviceID = VulkanContext::createDevice(l_GPU, l_Selector, &l_Extensions, {});
     VulkanDevice& l_Device = VulkanContext::getDevice(m_DeviceID);
 
@@ -158,7 +158,10 @@ Engine::Engine() : m_Window("Vulkan", 1920, 1080)
     }
 
     // Sync objects
-    m_RenderFinishedSemaphoreID = l_Device.createSemaphore();
+    for (uint32_t i = 0; i < l_Swapchain.getImageCount(); i++)
+    {
+        m_RenderFinishedSemaphoreIDs.push_back(l_Device.createSemaphore());
+    }
     m_InFlightFenceID = l_Device.createFence(true);
 
     
@@ -258,13 +261,13 @@ void Engine::run()
         // Submit
         {
             const std::array<VulkanCommandBuffer::WaitSemaphoreData, 1> l_WaitSemaphores = {{{l_Swapchain.getImgSemaphore(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT}}};
-            const std::array<ResourceID, 1> l_SignalSemaphores = {m_RenderFinishedSemaphoreID};
+            const std::array<ResourceID, 1> l_SignalSemaphores = {m_RenderFinishedSemaphoreIDs[l_ImageIndex]};
             l_GraphicsBuffer.submit(l_GraphicsQueue, l_WaitSemaphores, l_SignalSemaphores, m_InFlightFenceID);
         }
 
         // Present
         {
-            std::array<ResourceID, 1> l_Semaphores = { {m_RenderFinishedSemaphoreID} };
+            std::array<ResourceID, 1> l_Semaphores = { {m_RenderFinishedSemaphoreIDs[l_ImageIndex]} };
             l_Swapchain.present(m_PresentQueuePos, l_Semaphores);
         }
 
@@ -289,7 +292,7 @@ void Engine::createRenderPasses()
         VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
     l_Builder.addAttachment(l_DepthAttachment);
 
-    const std::array<VulkanRenderPassBuilder::AttachmentReference, 2> l_ColorReferences = {{{COLOR, 0}, {DEPTH_STENCIL, 1}}};
+    const std::array<VulkanRenderPassBuilder::AttachmentReference, 2> l_ColorReferences = {{{COLOR_ATTACHMENT, 0}, {DEPTH_STENCIL_ATTACHMENT, 1}}};
     l_Builder.addSubpass(l_ColorReferences, 0);
 
     m_RenderPassID = VulkanContext::getDevice(m_DeviceID).createRenderPass(l_Builder, 0);

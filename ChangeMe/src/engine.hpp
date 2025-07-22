@@ -40,7 +40,7 @@ private:
     ResourceID m_IndexBufferID;
     ResourceID m_GraphicsPipelineID;
 
-    ResourceID m_RenderFinishedSemaphoreID;
+    std::vector<ResourceID> m_RenderFinishedSemaphoreIDs;
     ResourceID m_InFlightFenceID;
 
 private:
