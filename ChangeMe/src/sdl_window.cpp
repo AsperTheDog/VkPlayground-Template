@@ -4,10 +4,8 @@
 #include <stdexcept>
 #include <SDL2/SDL.h>
 
-#include "utils/logger.hpp"
 #include "backends/imgui_impl_sdl2.h"
 #include "vulkan_context.hpp"
-#include "vulkan_device.hpp"
 
 VkExtent2D SDLWindow::WindowSize::toExtent2D() const
 {
@@ -31,9 +29,9 @@ SDLWindow::SDLWindow(const std::string_view p_Name, const int p_Width, const int
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
     m_SDLHandle = SDL_CreateWindow(p_Name.data(), p_Top, p_Left, p_Width, p_Height, p_Flags | SDL_WINDOW_VULKAN);
 
-    m_KeyPressed.connect([this](const uint32_t key)
+    m_KeyPressed.connect([this](const uint32_t p_Key)
         {
-            if (key == SDLK_q)
+            if (p_Key == SDLK_q)
                 toggleMouseCapture();
         });
 }
@@ -75,44 +73,46 @@ bool SDLWindow::isMinimized() const
 
 void SDLWindow::pollEvents()
 {
-    SDL_Event event;
-    while (SDL_PollEvent(&event))
+    SDL_Event l_Event;
+    while (SDL_PollEvent(&l_Event))
     {
-        ImGui_ImplSDL2_ProcessEvent(&event);
-        switch (event.type)
+        ImGui_ImplSDL2_ProcessEvent(&l_Event);
+        switch (l_Event.type)
         {
         case SDL_WINDOWEVENT:
-            if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED && event.window.data1 > 0 && event.window.data2 > 0)
+            if (l_Event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED && l_Event.window.data1 > 0 && l_Event.window.data2 > 0)
             {
-                m_ResizeSignal.emit(WindowSize {event.window.data1, event.window.data2}.toExtent2D());
+                m_ResizeSignal.emit(WindowSize {l_Event.window.data1, l_Event.window.data2}.toExtent2D());
                 m_Minimized = false;
             }
-            else if (event.window.event == SDL_WINDOWEVENT_MINIMIZED)
+            else if (l_Event.window.event == SDL_WINDOWEVENT_MINIMIZED)
                 m_Minimized = true;
+            else if (l_Event.window.event == SDL_WINDOWEVENT_RESTORED && m_Minimized)
+                m_Minimized = false;
             break;
         case SDL_MOUSEMOTION:
-            m_MouseMoved.emit(event.motion.xrel, event.motion.yrel);
+            m_MouseMoved.emit(l_Event.motion.xrel, l_Event.motion.yrel);
             break;
         case SDL_KEYDOWN:
-            m_KeyPressed.emit(event.key.keysym.sym);
+            m_KeyPressed.emit(l_Event.key.keysym.sym);
             break;
         case SDL_MOUSEBUTTONDOWN:
-            m_MouseButtonPressed.emit(event.button.button);
+            m_MouseButtonPressed.emit(l_Event.button.button);
             break;
         case SDL_MOUSEBUTTONUP:
-            m_MouseButtonReleased.emit(event.button.button);
+            m_MouseButtonReleased.emit(l_Event.button.button);
             break;
         case SDL_MOUSEWHEEL:
-            m_MouseScrolled.emit(event.wheel.y);
+            m_MouseScrolled.emit(l_Event.wheel.y);
             break;
         case SDL_KEYUP:
-            m_KeyReleased.emit(event.key.keysym.sym);
+            m_KeyReleased.emit(l_Event.key.keysym.sym);
             break;
         }
     }
-    const uint64_t now = SDL_GetTicks64();
-    m_Delta = (static_cast<float>(now) - m_PrevDelta) * 0.001f;
-    m_PrevDelta = static_cast<float>(now);
+    const uint64_t l_Now = SDL_GetTicks64();
+    m_Delta = (static_cast<float>(l_Now) - m_PrevDelta) * 0.001f;
+    m_PrevDelta = static_cast<float>(l_Now);
     m_EventsProcessed.emit(m_Delta);
 }
 

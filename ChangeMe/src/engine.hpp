@@ -4,6 +4,8 @@
 #include "sdl_window.hpp"
 #include "vulkan_queues.hpp"
 #include "camera/arcball_camera.hpp"
+#include "camera/flight_camera.hpp"
+#include "camera/ortho_controller_camera.hpp"
 
 struct PushData
 {
@@ -27,7 +29,9 @@ private:
     void configureCamera();
 
     SDLWindow m_Window;
-    Camera* m_Camera = nullptr;
+    ArcballCamera m_Camera{glm::vec3{}, 10.f};
+    //OrthoControllerCamera m_Camera{glm::vec3{ 0.0f, 0.0f, -1.0f }, glm::vec3{0.0f, 0.0f, 1.0f}, glm::vec3{0.0f, 1.0f, 0.0f}, {-5.f, 5.f}, {-5.f, 5.f}};
+    //FlightCamera m_Camera{glm::vec3{ 0.0f, 0.0f, -5.0f }, glm::vec3{ 0.0f, 0.0f, 1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f }};
 
     QueueSelection m_GraphicsQueuePos;
     QueueSelection m_PresentQueuePos;

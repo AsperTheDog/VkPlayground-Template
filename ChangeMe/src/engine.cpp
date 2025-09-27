@@ -169,11 +169,7 @@ Engine::Engine() : m_Window("Vulkan", 1920, 1080)
     
     m_Window.getResizedSignal().connect(this, &Engine::recreateSwapchain);
 
-    m_Camera = new ArcballCamera(glm::vec3{}, 10.f);
-    //m_Camera = new OrthoControllerCamera(glm::vec3{ 0.0f, 0.0f, -1.0f }, glm::vec3{0.0f, 0.0f, 1.0f}, glm::vec3{0.0f, 1.0f, 0.0f}, {-5.f, 5.f}, {-5.f, 5.f});
-    //m_Camera = new FlightCamera(glm::vec3{ 0.0f, 0.0f, -5.0f }, glm::vec3{ 0.0f, 0.0f, 1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f });
-
-    m_Camera->setScreenSize(l_Swapchain.getExtent().width, l_Swapchain.getExtent().height);
+    m_Camera.setScreenSize(l_Swapchain.getExtent().width, l_Swapchain.getExtent().height);
 
     initImgui();
     configureCamera();
@@ -252,7 +248,7 @@ void Engine::run()
 
             PushData l_PushData{};
             l_PushData.modelMatrix = glm::mat4(1.0f);
-            l_PushData.viewProjMatrix = m_Camera->getVPMatrix();
+            l_PushData.viewProjMatrix = m_Camera.getVPMatrix();
 
             l_GraphicsBuffer.reset();
             l_GraphicsBuffer.beginRecording();
@@ -385,15 +381,16 @@ void Engine::recreateSwapchain(const VkExtent2D p_NewSize)
 
 void Engine::configureCamera()
 {
-    m_Window.getKeyPressedSignal().connect(m_Camera, &Camera::keyPressed);
-    m_Window.getKeyReleasedSignal().connect(m_Camera, &Camera::keyReleased);
-    m_Window.getMouseMovedSignal().connect(m_Camera, &Camera::mouseMoved);
-    m_Window.getMouseButtonPressedSignal().connect(m_Camera, &Camera::mouseButtonPressed);
-    m_Window.getMouseButtonReleasedSignal().connect(m_Camera, &Camera::mouseButtonReleased);
-    m_Window.getMouseScrolledSignal().connect(m_Camera, &Camera::mouseScrolled);
-    m_Window.getEventsProcessedSignal().connect(m_Camera, &Camera::updateEvents);
+    Camera* l_Camera = &m_Camera;
+    m_Window.getKeyPressedSignal().connect(l_Camera, &Camera::keyPressed);
+    m_Window.getKeyReleasedSignal().connect(l_Camera, &Camera::keyReleased);
+    m_Window.getMouseMovedSignal().connect(l_Camera, &Camera::mouseMoved);
+    m_Window.getMouseButtonPressedSignal().connect(l_Camera, &Camera::mouseButtonPressed);
+    m_Window.getMouseButtonReleasedSignal().connect(l_Camera, &Camera::mouseButtonReleased);
+    m_Window.getMouseScrolledSignal().connect(l_Camera, &Camera::mouseScrolled);
+    m_Window.getEventsProcessedSignal().connect(l_Camera, &Camera::updateEvents);
 
-    if (dynamic_cast<FlightCamera*>(m_Camera))
+    if constexpr (std::is_same_v<decltype(m_Camera), FlightCamera>)
     {
         m_Window.toggleMouseCapture();
     }
