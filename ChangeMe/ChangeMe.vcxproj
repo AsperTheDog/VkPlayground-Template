@@ -136,11 +136,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\camera\ortho_controller_camera.cpp" />
+    <ClCompile Include="src\camera\orthographic_camera.cpp" />
+    <ClCompile Include="src\camera\perspective_camera.cpp" />
+    <ClCompile Include="src\camera\camera.cpp" />
+    <ClCompile Include="src\camera\arcball_camera.cpp" />
+    <ClCompile Include="src\camera\flight_camera.cpp" />
     <ClCompile Include="src\engine.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\sdl_window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\camera\ortho_controller_camera.hpp" />
+    <ClInclude Include="src\camera\orthographic_camera.hpp" />
+    <ClInclude Include="src\camera\perspective_camera.hpp" />
+    <ClInclude Include="src\camera\camera.hpp" />
+    <ClInclude Include="src\camera\arcball_camera.hpp" />
+    <ClInclude Include="src\camera\flight_camera.hpp" />
     <ClInclude Include="src\engine.hpp" />
     <ClInclude Include="src\sdl_window.hpp" />
     <ClInclude Include="src\vertex.hpp" />

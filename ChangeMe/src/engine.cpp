@@ -16,15 +16,17 @@
 #include "vulkan_sync.hpp"
 #include "ext/vulkan_swapchain.hpp"
 #include "vulkan_descriptors.hpp"
+#include "camera/flight_camera.hpp"
+#include "camera/ortho_controller_camera.hpp"
 #include "utils/logger.hpp"
 
-constexpr std::array<Vertex, 3> vertices = {
+constexpr std::array<Vertex, 3> VERTICES = {
     Vertex{ {  0.0f, -0.5f, 0.0f }, { 255,   0,   0 } },
     Vertex{ {  0.5f,  0.5f, 0.0f }, {   0, 255,   0 } },
     Vertex{ { -0.5f,  0.5f, 0.0f }, {   0,   0, 255 } }
 };
 
-constexpr std::array<uint16_t, 3> indices = { 0, 1, 2 };
+constexpr std::array<uint16_t, 3> INDICES = { 0, 1, 2 };
 
 static VulkanGPU chooseCorrectGPU()
 {
@@ -114,17 +116,17 @@ Engine::Engine() : m_Window("Vulkan", 1920, 1080)
         VulkanCommandBuffer& l_CmdBuffer = l_Device.getCommandBuffer(l_OneTimeTransferCmdBufferID, 0);
         
         // Vertex Buffer
-        m_VertexBufferID = l_Device.createBuffer(sizeof(vertices), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, m_TransferQueuePos.familyIndex);
+        m_VertexBufferID = l_Device.createBuffer(sizeof(VERTICES), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, m_TransferQueuePos.familyIndex);
         VulkanBuffer& l_VertexBuffer = l_Device.getBuffer(m_VertexBufferID);
         l_VertexBuffer.allocateFromFlags({ VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, false });
 
         l_CmdBuffer.beginRecording();
-        l_CmdBuffer.ecmdDumpDataIntoBuffer(m_VertexBufferID, reinterpret_cast<const uint8_t*>(vertices.data()), sizeof(vertices));
+        l_CmdBuffer.ecmdDumpDataIntoBuffer(m_VertexBufferID, reinterpret_cast<const uint8_t*>(VERTICES.data()), sizeof(VERTICES));
         l_CmdBuffer.endRecording();
         l_CmdBuffer.submit(l_Device.getQueue(m_TransferQueuePos), {}, {}, l_FenceID);
         
         // Index Buffer
-        m_IndexBufferID = l_Device.createBuffer(sizeof(indices), VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, m_TransferQueuePos.familyIndex);
+        m_IndexBufferID = l_Device.createBuffer(sizeof(INDICES), VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, m_TransferQueuePos.familyIndex);
         VulkanBuffer& l_IndexBuffer = l_Device.getBuffer(m_IndexBufferID);
         l_IndexBuffer.allocateFromFlags({ VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, false });
 
@@ -133,7 +135,7 @@ Engine::Engine() : m_Window("Vulkan", 1920, 1080)
 
         l_CmdBuffer.reset();
         l_CmdBuffer.beginRecording();
-        l_CmdBuffer.ecmdDumpDataIntoBuffer(m_IndexBufferID, reinterpret_cast<const uint8_t*>(indices.data()), sizeof(indices));
+        l_CmdBuffer.ecmdDumpDataIntoBuffer(m_IndexBufferID, reinterpret_cast<const uint8_t*>(INDICES.data()), sizeof(INDICES));
         l_CmdBuffer.endRecording();
         l_CmdBuffer.submit(l_Device.getQueue(m_TransferQueuePos), {}, {}, l_FenceID);
 
@@ -167,7 +169,14 @@ Engine::Engine() : m_Window("Vulkan", 1920, 1080)
     
     m_Window.getResizedSignal().connect(this, &Engine::recreateSwapchain);
 
+    m_Camera = new ArcballCamera(glm::vec3{}, 10.f);
+    //m_Camera = new OrthoControllerCamera(glm::vec3{ 0.0f, 0.0f, -1.0f }, glm::vec3{0.0f, 0.0f, 1.0f}, glm::vec3{0.0f, 1.0f, 0.0f}, {-5.f, 5.f}, {-5.f, 5.f});
+    //m_Camera = new FlightCamera(glm::vec3{ 0.0f, 0.0f, -5.0f }, glm::vec3{ 0.0f, 0.0f, 1.0f }, glm::vec3{ 0.0f, 1.0f, 0.0f });
+
+    m_Camera->setScreenSize(l_Swapchain.getExtent().width, l_Swapchain.getExtent().height);
+
     initImgui();
+    configureCamera();
 }
 
 Engine::~Engine()
@@ -223,33 +232,38 @@ void Engine::run()
 
         // Recording
         {
-            const VkExtent2D& extent = l_SwapchainExt->getSwapchain(m_SwapchainID).getExtent();
+            const VkExtent2D& l_Extent = l_SwapchainExt->getSwapchain(m_SwapchainID).getExtent();
 
-            std::array<VkClearValue, 2> clearValues;
-            clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
-            clearValues[1].depthStencil = { 1.0f, 0 };
+            std::array<VkClearValue, 2> l_ClearValues;
+            l_ClearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
+            l_ClearValues[1].depthStencil = { 1.0f, 0 };
 
-            VkViewport viewport;
-            viewport.x = 0.0f;
-            viewport.y = 0.0f;
-            viewport.width = static_cast<float>(extent.width);
-            viewport.height = static_cast<float>(extent.height);
-            viewport.minDepth = 0.0f;
-            viewport.maxDepth = 1.0f;
+            VkViewport l_Viewport;
+            l_Viewport.x = 0.0f;
+            l_Viewport.y = 0.0f;
+            l_Viewport.width = static_cast<float>(l_Extent.width);
+            l_Viewport.height = static_cast<float>(l_Extent.height);
+            l_Viewport.minDepth = 0.0f;
+            l_Viewport.maxDepth = 1.0f;
 
-            VkRect2D scissor;
-            scissor.offset = { 0, 0 };
-            scissor.extent = extent;
+            VkRect2D l_Scissor;
+            l_Scissor.offset = { 0, 0 };
+            l_Scissor.extent = l_Extent;
+
+            PushData l_PushData{};
+            l_PushData.modelMatrix = glm::mat4(1.0f);
+            l_PushData.viewProjMatrix = m_Camera->getVPMatrix();
 
             l_GraphicsBuffer.reset();
             l_GraphicsBuffer.beginRecording();
 
-            l_GraphicsBuffer.cmdBeginRenderPass(m_RenderPassID, m_FramebufferIDs[l_ImageIndex], extent, clearValues);
+            l_GraphicsBuffer.cmdBeginRenderPass(m_RenderPassID, m_FramebufferIDs[l_ImageIndex], l_Extent, l_ClearValues);
             l_GraphicsBuffer.cmdBindVertexBuffer(m_VertexBufferID, 0);
             l_GraphicsBuffer.cmdBindIndexBuffer(m_IndexBufferID, 0, VK_INDEX_TYPE_UINT16);
             l_GraphicsBuffer.cmdBindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipelineID);
-            l_GraphicsBuffer.cmdSetViewport(viewport);
-            l_GraphicsBuffer.cmdSetScissor(scissor);
+            l_GraphicsBuffer.cmdSetViewport(l_Viewport);
+            l_GraphicsBuffer.cmdSetScissor(l_Scissor);
+            l_GraphicsBuffer.cmdPushConstant(m_GraphicsPipelineLayoutID, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushData), &l_PushData);
             l_GraphicsBuffer.cmdDrawIndexed(3, 0, 0);
 
             ImGui_ImplVulkan_RenderDrawData(l_ImguiDrawData, *l_GraphicsBuffer);
@@ -303,7 +317,11 @@ void Engine::createPipelines()
 {
     VulkanDevice& l_Device = VulkanContext::getDevice(m_DeviceID);
 
-	const uint32_t l_Layout = l_Device.createPipelineLayout({}, {});
+    {
+        std::array<VkPushConstantRange, 1> l_PushConstants{};
+        l_PushConstants[0] = { VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(PushData) };
+        m_GraphicsPipelineLayoutID = l_Device.createPipelineLayout({}, l_PushConstants);
+    }
     
 #ifndef _DEBUG
     VulkanShader l_Shader{0, false};
@@ -330,7 +348,7 @@ void Engine::createPipelines()
     l_Builder.addVertexBinding(l_Binding, true);
 	l_Builder.setInputAssemblyState(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, VK_FALSE);
 	l_Builder.setViewportState(1, 1);
-	l_Builder.setRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE);
+	l_Builder.setRasterizationState(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_CLOCKWISE);
 	l_Builder.setMultisampleState(VK_SAMPLE_COUNT_1_BIT, VK_FALSE, 1.0f);
 	l_Builder.setDepthStencilState(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS);
 	l_Builder.addColorBlendAttachment(l_ColorBlendAttachment);
@@ -338,7 +356,7 @@ void Engine::createPipelines()
 	l_Builder.setDynamicState(l_DynamicStates);
     l_Builder.addShaderStage(l_VertexShader);
     l_Builder.addShaderStage(l_FragmentShader);
-	m_GraphicsPipelineID = l_Device.createPipeline(l_Builder, l_Layout, m_RenderPassID, 0);
+	m_GraphicsPipelineID = l_Device.createPipeline(l_Builder, m_GraphicsPipelineLayoutID, m_RenderPassID, 0);
 
     l_Device.freeShaderModule(l_VertexShader);
     l_Device.freeShaderModule(l_FragmentShader);
@@ -350,11 +368,11 @@ void Engine::recreateSwapchain(const VkExtent2D p_NewSize)
     VulkanDevice& l_Device = VulkanContext::getDevice(m_DeviceID);
     l_Device.waitIdle();
 
-    VulkanSwapchainExtension* swapchainExtension = VulkanSwapchainExtension::get(l_Device);
+    VulkanSwapchainExtension* l_SwapchainExtension = VulkanSwapchainExtension::get(l_Device);
 
-    m_SwapchainID = swapchainExtension->createSwapchain(m_Window.getSurface(), p_NewSize, swapchainExtension->getSwapchain(m_SwapchainID).getFormat(), VK_PRESENT_MODE_FIFO_KHR, m_SwapchainID);
+    m_SwapchainID = l_SwapchainExtension->createSwapchain(m_Window.getSurface(), p_NewSize, l_SwapchainExtension->getSwapchain(m_SwapchainID).getFormat(), VK_PRESENT_MODE_FIFO_KHR, m_SwapchainID);
 
-    VulkanSwapchain& l_Swapchain = swapchainExtension->getSwapchain(m_SwapchainID);
+    VulkanSwapchain& l_Swapchain = l_SwapchainExtension->getSwapchain(m_SwapchainID);
 
     for (uint32_t i = 0; i < l_Swapchain.getImageCount(); ++i)
     {
@@ -363,6 +381,22 @@ void Engine::recreateSwapchain(const VkExtent2D p_NewSize)
         m_FramebufferIDs[i] = VulkanContext::getDevice(m_DeviceID).createFramebuffer({ l_Swapchain.getExtent().width, l_Swapchain.getExtent().height, 1 }, m_RenderPassID, l_Attachments);
     }
     Logger::popContext();
+}
+
+void Engine::configureCamera()
+{
+    m_Window.getKeyPressedSignal().connect(m_Camera, &Camera::keyPressed);
+    m_Window.getKeyReleasedSignal().connect(m_Camera, &Camera::keyReleased);
+    m_Window.getMouseMovedSignal().connect(m_Camera, &Camera::mouseMoved);
+    m_Window.getMouseButtonPressedSignal().connect(m_Camera, &Camera::mouseButtonPressed);
+    m_Window.getMouseButtonReleasedSignal().connect(m_Camera, &Camera::mouseButtonReleased);
+    m_Window.getMouseScrolledSignal().connect(m_Camera, &Camera::mouseScrolled);
+    m_Window.getEventsProcessedSignal().connect(m_Camera, &Camera::updateEvents);
+
+    if (dynamic_cast<FlightCamera*>(m_Camera))
+    {
+        m_Window.toggleMouseCapture();
+    }
 }
 
 void Engine::initImgui() const

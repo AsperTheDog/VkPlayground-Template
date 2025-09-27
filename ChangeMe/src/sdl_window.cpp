@@ -96,6 +96,15 @@ void SDLWindow::pollEvents()
         case SDL_KEYDOWN:
             m_KeyPressed.emit(event.key.keysym.sym);
             break;
+        case SDL_MOUSEBUTTONDOWN:
+            m_MouseButtonPressed.emit(event.button.button);
+            break;
+        case SDL_MOUSEBUTTONUP:
+            m_MouseButtonReleased.emit(event.button.button);
+            break;
+        case SDL_MOUSEWHEEL:
+            m_MouseScrolled.emit(event.wheel.y);
+            break;
         case SDL_KEYUP:
             m_KeyReleased.emit(event.key.keysym.sym);
             break;
@@ -177,6 +186,21 @@ Signal<uint32_t>& SDLWindow::getKeyPressedSignal()
 Signal<uint32_t>& SDLWindow::getKeyReleasedSignal()
 {
     return m_KeyReleased;
+}
+
+Signal<uint32_t>& SDLWindow::getMouseButtonPressedSignal()
+{
+    return m_MouseButtonPressed;
+}
+
+Signal<uint32_t>& SDLWindow::getMouseButtonReleasedSignal()
+{
+    return m_MouseButtonReleased;
+}
+
+Signal<int32_t>& SDLWindow::getMouseScrolledSignal()
+{
+    return m_MouseScrolled;
 }
 
 Signal<float>& SDLWindow::getEventsProcessedSignal()

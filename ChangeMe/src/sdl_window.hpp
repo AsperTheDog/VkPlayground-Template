@@ -53,6 +53,9 @@ public:
 	[[nodiscard]] Signal<int32_t, int32_t>& getMouseMovedSignal();
 	[[nodiscard]] Signal<uint32_t>& getKeyPressedSignal();
 	[[nodiscard]] Signal<uint32_t>& getKeyReleasedSignal();
+    [[nodiscard]] Signal<uint32_t>& getMouseButtonPressedSignal();
+    [[nodiscard]] Signal<uint32_t>& getMouseButtonReleasedSignal();
+    [[nodiscard]] Signal<int32_t>& getMouseScrolledSignal();
 	[[nodiscard]] Signal<float>& getEventsProcessedSignal();
     [[nodiscard]] Signal<bool>& getMouseCaptureChangedSignal();
 
@@ -68,6 +71,9 @@ private:
 	Signal<int32_t, int32_t> m_MouseMoved;  // relX, relY, isMouseCaptured
 	Signal<uint32_t> m_KeyPressed;          // key, isMouseCaptured
 	Signal<uint32_t> m_KeyReleased;         // key, isMouseCaptured
+    Signal<uint32_t> m_MouseButtonPressed;  // button, isMouseCaptured
+    Signal<uint32_t> m_MouseButtonReleased; // button, isMouseCaptured
+    Signal<int32_t> m_MouseScrolled;        // y, isMouseCaptured
 	Signal<float> m_EventsProcessed;        // delta
     Signal<bool> m_MouseCaptureChanged;     // isMouseCaptured
 

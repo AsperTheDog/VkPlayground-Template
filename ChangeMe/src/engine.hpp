@@ -3,7 +3,13 @@
 
 #include "sdl_window.hpp"
 #include "vulkan_queues.hpp"
+#include "camera/arcball_camera.hpp"
 
+struct PushData
+{
+    alignas(16) glm::mat4 modelMatrix;
+    alignas(16) glm::mat4 viewProjMatrix;
+};
 
 class Engine
 {
@@ -18,7 +24,10 @@ private:
 
     void recreateSwapchain(VkExtent2D p_NewSize);
 
+    void configureCamera();
+
     SDLWindow m_Window;
+    Camera* m_Camera = nullptr;
 
     QueueSelection m_GraphicsQueuePos;
     QueueSelection m_PresentQueuePos;
@@ -39,6 +48,7 @@ private:
     ResourceID m_VertexBufferID;
     ResourceID m_IndexBufferID;
     ResourceID m_GraphicsPipelineID;
+    ResourceID m_GraphicsPipelineLayoutID;
 
     std::vector<ResourceID> m_RenderFinishedSemaphoreIDs;
     ResourceID m_InFlightFenceID;
