@@ -140,7 +140,7 @@ void SDLWindow::free()
 {
     if (m_Surface != nullptr)
     {
-        vkDestroySurfaceKHR(VulkanContext::m_VkHandle, m_Surface, nullptr);
+        vkDestroySurfaceKHR(VulkanContext::s_VkHandle, m_Surface, nullptr);
         m_Surface = nullptr;
     }
 
