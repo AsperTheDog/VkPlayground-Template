@@ -4,6 +4,7 @@
 
 #include <imgui.h>
 #include <iostream>
+#include <thread>
 #include <backends/imgui_impl_vulkan.h>
 
 #include "vertex.hpp"
@@ -200,6 +201,7 @@ void Engine::run()
         m_Window.pollEvents();
         if (m_Window.isMinimized())
         {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             continue;
         }
 
@@ -223,33 +225,33 @@ void Engine::run()
 
         // Recording
         {
-            const VkExtent2D& extent = l_SwapchainExt->getSwapchain(m_SwapchainID).getExtent();
+            const VkExtent2D& l_Extent = l_SwapchainExt->getSwapchain(m_SwapchainID).getExtent();
 
-            std::array<VkClearValue, 2> clearValues;
-            clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
-            clearValues[1].depthStencil = { 1.0f, 0 };
+            std::array<VkClearValue, 2> l_ClearValues;
+            l_ClearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
+            l_ClearValues[1].depthStencil = { 1.0f, 0 };
 
-            VkViewport viewport;
-            viewport.x = 0.0f;
-            viewport.y = 0.0f;
-            viewport.width = static_cast<float>(extent.width);
-            viewport.height = static_cast<float>(extent.height);
-            viewport.minDepth = 0.0f;
-            viewport.maxDepth = 1.0f;
+            VkViewport l_Viewport;
+            l_Viewport.x = 0.0f;
+            l_Viewport.y = 0.0f;
+            l_Viewport.width = static_cast<float>(l_Extent.width);
+            l_Viewport.height = static_cast<float>(l_Extent.height);
+            l_Viewport.minDepth = 0.0f;
+            l_Viewport.maxDepth = 1.0f;
 
-            VkRect2D scissor;
-            scissor.offset = { 0, 0 };
-            scissor.extent = extent;
+            VkRect2D l_Scissor;
+            l_Scissor.offset = { 0, 0 };
+            l_Scissor.extent = l_Extent;
 
             l_GraphicsBuffer.reset();
             l_GraphicsBuffer.beginRecording();
 
-            l_GraphicsBuffer.cmdBeginRenderPass(m_RenderPassID, m_FramebufferIDs[l_ImageIndex], extent, clearValues);
+            l_GraphicsBuffer.cmdBeginRenderPass(m_RenderPassID, m_FramebufferIDs[l_ImageIndex], l_Extent, l_ClearValues);
             l_GraphicsBuffer.cmdBindVertexBuffer(m_VertexBufferID, 0);
             l_GraphicsBuffer.cmdBindIndexBuffer(m_IndexBufferID, 0, VK_INDEX_TYPE_UINT16);
             l_GraphicsBuffer.cmdBindPipeline(VK_PIPELINE_BIND_POINT_GRAPHICS, m_GraphicsPipelineID);
-            l_GraphicsBuffer.cmdSetViewport(viewport);
-            l_GraphicsBuffer.cmdSetScissor(scissor);
+            l_GraphicsBuffer.cmdSetViewport(l_Viewport);
+            l_GraphicsBuffer.cmdSetScissor(l_Scissor);
             l_GraphicsBuffer.cmdDrawIndexed(3, 0, 0);
 
             ImGui_ImplVulkan_RenderDrawData(l_ImguiDrawData, *l_GraphicsBuffer);
@@ -350,11 +352,11 @@ void Engine::recreateSwapchain(const VkExtent2D p_NewSize)
     VulkanDevice& l_Device = VulkanContext::getDevice(m_DeviceID);
     l_Device.waitIdle();
 
-    VulkanSwapchainExtension* swapchainExtension = VulkanSwapchainExtension::get(l_Device);
+    VulkanSwapchainExtension* l_SwapchainExtension = VulkanSwapchainExtension::get(l_Device);
 
-    m_SwapchainID = swapchainExtension->createSwapchain(m_Window.getSurface(), p_NewSize, swapchainExtension->getSwapchain(m_SwapchainID).getFormat(), VK_PRESENT_MODE_FIFO_KHR, m_SwapchainID);
+    m_SwapchainID = l_SwapchainExtension->createSwapchain(m_Window.getSurface(), p_NewSize, l_SwapchainExtension->getSwapchain(m_SwapchainID).getFormat(), VK_PRESENT_MODE_FIFO_KHR, m_SwapchainID);
 
-    VulkanSwapchain& l_Swapchain = swapchainExtension->getSwapchain(m_SwapchainID);
+    VulkanSwapchain& l_Swapchain = l_SwapchainExtension->getSwapchain(m_SwapchainID);
 
     for (uint32_t i = 0; i < l_Swapchain.getImageCount(); ++i)
     {

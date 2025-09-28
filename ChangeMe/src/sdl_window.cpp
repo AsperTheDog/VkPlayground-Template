@@ -4,10 +4,8 @@
 #include <stdexcept>
 #include <SDL2/SDL.h>
 
-#include "utils/logger.hpp"
 #include "backends/imgui_impl_sdl2.h"
 #include "vulkan_context.hpp"
-#include "vulkan_device.hpp"
 
 VkExtent2D SDLWindow::WindowSize::toExtent2D() const
 {
@@ -31,9 +29,9 @@ SDLWindow::SDLWindow(const std::string_view p_Name, const int p_Width, const int
     SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS);
     m_SDLHandle = SDL_CreateWindow(p_Name.data(), p_Top, p_Left, p_Width, p_Height, p_Flags | SDL_WINDOW_VULKAN);
 
-    m_KeyPressed.connect([this](const uint32_t key)
+    m_KeyPressed.connect([this](const uint32_t p_Key)
         {
-            if (key == SDLK_q)
+            if (p_Key == SDLK_q)
                 toggleMouseCapture();
         });
 }
@@ -45,27 +43,27 @@ void SDLWindow::initImgui() const
 
 bool SDLWindow::shouldClose() const
 {
-    return SDL_QuitRequested();
+    return m_ShouldClose;
 }
 
 uint32_t SDLWindow::getRequiredVulkanExtensionCount() const
 {
-    uint32_t extensionCount;
-    SDL_Vulkan_GetInstanceExtensions(m_SDLHandle, &extensionCount, nullptr);
-    return extensionCount;
+    uint32_t l_ExtensionCount;
+    SDL_Vulkan_GetInstanceExtensions(m_SDLHandle, &l_ExtensionCount, nullptr);
+    return l_ExtensionCount;
 }
 
 void SDLWindow::getRequiredVulkanExtensions(const char* p_Container[]) const
 {
-    uint32_t extensionCount = getRequiredVulkanExtensionCount();
-    SDL_Vulkan_GetInstanceExtensions(m_SDLHandle, &extensionCount, p_Container);
+    uint32_t l_ExtensionCount = getRequiredVulkanExtensionCount();
+    SDL_Vulkan_GetInstanceExtensions(m_SDLHandle, &l_ExtensionCount, p_Container);
 }
 
 SDLWindow::WindowSize SDLWindow::getSize() const
 {
-    Sint32 width, height;
-    SDL_GetWindowSize(m_SDLHandle, &width, &height);
-    return { width, height };
+    Sint32 l_Width, l_Height;
+    SDL_GetWindowSize(m_SDLHandle, &l_Width, &l_Height);
+    return { l_Width, l_Height };
 }
 
 bool SDLWindow::isMinimized() const
@@ -75,29 +73,32 @@ bool SDLWindow::isMinimized() const
 
 void SDLWindow::pollEvents()
 {
-    SDL_Event event;
-    while (SDL_PollEvent(&event))
+    SDL_Event l_Event;
+    while (SDL_PollEvent(&l_Event))
     {
-        ImGui_ImplSDL2_ProcessEvent(&event);
-        switch (event.type)
+        ImGui_ImplSDL2_ProcessEvent(&l_Event);
+        switch (l_Event.type)
         {
+        case SDL_QUIT:
+            m_ShouldClose = true;
+            break;
         case SDL_WINDOWEVENT:
-            if (event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED && event.window.data1 > 0 && event.window.data2 > 0)
+            if (l_Event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED && l_Event.window.data1 > 0 && l_Event.window.data2 > 0)
             {
-                m_ResizeSignal.emit(WindowSize {event.window.data1, event.window.data2}.toExtent2D());
+                m_ResizeSignal.emit(WindowSize {l_Event.window.data1, l_Event.window.data2}.toExtent2D());
                 m_Minimized = false;
             }
-            else if (event.window.event == SDL_WINDOWEVENT_MINIMIZED)
+            else if (l_Event.window.event == SDL_WINDOWEVENT_MINIMIZED)
                 m_Minimized = true;
             break;
         case SDL_MOUSEMOTION:
-            m_MouseMoved.emit(event.motion.xrel, event.motion.yrel);
+            m_MouseMoved.emit(l_Event.motion.xrel, l_Event.motion.yrel);
             break;
         case SDL_KEYDOWN:
-            m_KeyPressed.emit(event.key.keysym.sym);
+            m_KeyPressed.emit(l_Event.key.keysym.sym);
             break;
         case SDL_KEYUP:
-            m_KeyReleased.emit(event.key.keysym.sym);
+            m_KeyReleased.emit(l_Event.key.keysym.sym);
             break;
         }
     }
