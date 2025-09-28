@@ -43,27 +43,27 @@ void SDLWindow::initImgui() const
 
 bool SDLWindow::shouldClose() const
 {
-    return SDL_QuitRequested();
+    return m_ShouldClose;
 }
 
 uint32_t SDLWindow::getRequiredVulkanExtensionCount() const
 {
-    uint32_t extensionCount;
-    SDL_Vulkan_GetInstanceExtensions(m_SDLHandle, &extensionCount, nullptr);
-    return extensionCount;
+    uint32_t l_ExtensionCount;
+    SDL_Vulkan_GetInstanceExtensions(m_SDLHandle, &l_ExtensionCount, nullptr);
+    return l_ExtensionCount;
 }
 
 void SDLWindow::getRequiredVulkanExtensions(const char* p_Container[]) const
 {
-    uint32_t extensionCount = getRequiredVulkanExtensionCount();
-    SDL_Vulkan_GetInstanceExtensions(m_SDLHandle, &extensionCount, p_Container);
+    uint32_t l_ExtensionCount = getRequiredVulkanExtensionCount();
+    SDL_Vulkan_GetInstanceExtensions(m_SDLHandle, &l_ExtensionCount, p_Container);
 }
 
 SDLWindow::WindowSize SDLWindow::getSize() const
 {
-    Sint32 width, height;
-    SDL_GetWindowSize(m_SDLHandle, &width, &height);
-    return { width, height };
+    Sint32 l_Width, l_Height;
+    SDL_GetWindowSize(m_SDLHandle, &l_Width, &l_Height);
+    return { l_Width, l_Height };
 }
 
 bool SDLWindow::isMinimized() const
@@ -79,6 +79,9 @@ void SDLWindow::pollEvents()
         ImGui_ImplSDL2_ProcessEvent(&l_Event);
         switch (l_Event.type)
         {
+        case SDL_QUIT:
+            m_ShouldClose = true;
+            break;
         case SDL_WINDOWEVENT:
             if (l_Event.window.event == SDL_WINDOWEVENT_SIZE_CHANGED && l_Event.window.data1 > 0 && l_Event.window.data2 > 0)
             {
@@ -87,7 +90,7 @@ void SDLWindow::pollEvents()
             }
             else if (l_Event.window.event == SDL_WINDOWEVENT_MINIMIZED)
                 m_Minimized = true;
-            else if (l_Event.window.event == SDL_WINDOWEVENT_RESTORED && m_Minimized)
+            else if (l_Event.window.event == SDL_WINDOWEVENT_RESTORED)
                 m_Minimized = false;
             break;
         case SDL_MOUSEMOTION:

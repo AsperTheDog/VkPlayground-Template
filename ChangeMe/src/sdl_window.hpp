@@ -83,6 +83,8 @@ private:
 	bool m_MouseCaptured = false;
     bool m_Minimized = false;
 
+    bool m_ShouldClose = false;
+
 	friend class Surface;
 	friend class VulkanGPU;
 };

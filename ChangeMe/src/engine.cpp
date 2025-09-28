@@ -4,6 +4,7 @@
 
 #include <imgui.h>
 #include <iostream>
+#include <thread>
 #include <backends/imgui_impl_vulkan.h>
 
 #include "vertex.hpp"
@@ -205,6 +206,7 @@ void Engine::run()
         m_Window.pollEvents();
         if (m_Window.isMinimized())
         {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             continue;
         }
 
