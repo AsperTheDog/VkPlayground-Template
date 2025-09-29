@@ -231,7 +231,7 @@ void Engine::run()
         // Recording
         {
             const VkExtent2D& l_Extent = l_SwapchainExt->getSwapchain(m_SwapchainID).getExtent();
-
+          
             std::array<VkClearValue, 2> l_ClearValues;
             l_ClearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
             l_ClearValues[1].depthStencil = { 1.0f, 0 };
