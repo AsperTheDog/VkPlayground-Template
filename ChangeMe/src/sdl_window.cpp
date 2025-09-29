@@ -90,6 +90,8 @@ void SDLWindow::pollEvents()
             }
             else if (l_Event.window.event == SDL_WINDOWEVENT_MINIMIZED)
                 m_Minimized = true;
+            else if (l_Event.window.event == SDL_WINDOWEVENT_RESTORED)
+                m_Minimized = false;
             break;
         case SDL_MOUSEMOTION:
             m_MouseMoved.emit(l_Event.motion.xrel, l_Event.motion.yrel);
@@ -97,14 +99,23 @@ void SDLWindow::pollEvents()
         case SDL_KEYDOWN:
             m_KeyPressed.emit(l_Event.key.keysym.sym);
             break;
+        case SDL_MOUSEBUTTONDOWN:
+            m_MouseButtonPressed.emit(l_Event.button.button);
+            break;
+        case SDL_MOUSEBUTTONUP:
+            m_MouseButtonReleased.emit(l_Event.button.button);
+            break;
+        case SDL_MOUSEWHEEL:
+            m_MouseScrolled.emit(l_Event.wheel.y);
+            break;
         case SDL_KEYUP:
             m_KeyReleased.emit(l_Event.key.keysym.sym);
             break;
         }
     }
-    const uint64_t now = SDL_GetTicks64();
-    m_Delta = (static_cast<float>(now) - m_PrevDelta) * 0.001f;
-    m_PrevDelta = static_cast<float>(now);
+    const uint64_t l_Now = SDL_GetTicks64();
+    m_Delta = (static_cast<float>(l_Now) - m_PrevDelta) * 0.001f;
+    m_PrevDelta = static_cast<float>(l_Now);
     m_EventsProcessed.emit(m_Delta);
 }
 
@@ -178,6 +189,21 @@ Signal<uint32_t>& SDLWindow::getKeyPressedSignal()
 Signal<uint32_t>& SDLWindow::getKeyReleasedSignal()
 {
     return m_KeyReleased;
+}
+
+Signal<uint32_t>& SDLWindow::getMouseButtonPressedSignal()
+{
+    return m_MouseButtonPressed;
+}
+
+Signal<uint32_t>& SDLWindow::getMouseButtonReleasedSignal()
+{
+    return m_MouseButtonReleased;
+}
+
+Signal<int32_t>& SDLWindow::getMouseScrolledSignal()
+{
+    return m_MouseScrolled;
 }
 
 Signal<float>& SDLWindow::getEventsProcessedSignal()
