@@ -101,9 +101,12 @@ Engine::Engine() : m_Window("Vulkan", 1920, 1080)
     m_GraphicsCmdBufferID = l_Device.createCommandBuffer(l_GraphicsQueueFamily, 0, false);
 
     // Depth Buffer
-    m_DepthBuffer = l_Device.createImage(VK_IMAGE_TYPE_2D, VK_FORMAT_D32_SFLOAT, { l_Swapchain.getExtent().width, l_Swapchain.getExtent().height, 1 }, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 0);
+    VulkanMemoryAllocator::MemoryPreferences l_MemPrefs{
+        .usage = VMA_MEMORY_USAGE_AUTO,
+        .preferredProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+    };
+    m_DepthBuffer = l_Device.createAndAllocateImage(l_MemPrefs, {VK_IMAGE_TYPE_2D, VK_FORMAT_D32_SFLOAT, { l_Swapchain.getExtent().width, l_Swapchain.getExtent().height, 1 }, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 0});
     VulkanImage& l_DepthImage = l_Device.getImage(m_DepthBuffer);
-    l_DepthImage.allocateFromFlags({ VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, false });
     m_DepthBufferView = l_DepthImage.createImageView(VK_FORMAT_D32_SFLOAT, VK_IMAGE_ASPECT_DEPTH_BIT);
     
     l_Device.configureStagingBuffer(5LL * 1024 * 1024, m_TransferQueuePos);
@@ -117,20 +120,16 @@ Engine::Engine() : m_Window("Vulkan", 1920, 1080)
         VulkanCommandBuffer& l_CmdBuffer = l_Device.getCommandBuffer(l_OneTimeTransferCmdBufferID, 0);
         
         // Vertex Buffer
-        m_VertexBufferID = l_Device.createBuffer(sizeof(VERTICES), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, m_TransferQueuePos.familyIndex);
-        VulkanBuffer& l_VertexBuffer = l_Device.getBuffer(m_VertexBufferID);
-        l_VertexBuffer.allocateFromFlags({ VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, false });
-
+        m_VertexBufferID = l_Device.createAndAllocateBuffer(l_MemPrefs, {sizeof(VERTICES), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, m_TransferQueuePos.familyIndex});
+        
         l_CmdBuffer.beginRecording();
         l_CmdBuffer.ecmdDumpDataIntoBuffer(m_VertexBufferID, reinterpret_cast<const uint8_t*>(VERTICES.data()), sizeof(VERTICES));
         l_CmdBuffer.endRecording();
         l_CmdBuffer.submit(l_Device.getQueue(m_TransferQueuePos), {}, {}, l_FenceID);
         
         // Index Buffer
-        m_IndexBufferID = l_Device.createBuffer(sizeof(INDICES), VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, m_TransferQueuePos.familyIndex);
-        VulkanBuffer& l_IndexBuffer = l_Device.getBuffer(m_IndexBufferID);
-        l_IndexBuffer.allocateFromFlags({ VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, false });
-
+        m_IndexBufferID = l_Device.createAndAllocateBuffer(l_MemPrefs, {sizeof(INDICES), VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, m_TransferQueuePos.familyIndex});
+        
         l_Fence.wait();
         l_Fence.reset();
 

@@ -99,6 +99,12 @@
     <ClInclude Include="submodule\include\utils\shader_reflection.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="submodule\include\ext\vulkan_external_memory.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="submodule\include\utils\vulkan_base.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="submodule\src\ext\vulkan_acceleration_structure.cpp">
@@ -170,7 +176,10 @@
     <ClCompile Include="submodule\src\allocators.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="submodule\src\volk_loader.cpp">
+    <ClCompile Include="submodule\src\ext\vulkan_external_memory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="submodule\src\vma.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
