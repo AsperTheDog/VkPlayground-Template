@@ -9,10 +9,10 @@ public:
 
     void setTarget(glm::vec3 p_Target);
 
-	void mouseMoved(int32_t p_RelX, int32_t p_RelY) override;
+	void mouseMoved(float p_RelX, float p_RelY) override;
     void mouseButtonPressed(uint32_t p_Button) override;
     void mouseButtonReleased(uint32_t p_Button) override;
-    void mouseScrolled(int32_t p_Y) override;
+    void mouseScrolled(float p_Y) override;
 
 private:
     float m_MovingSpeed = 1.f;

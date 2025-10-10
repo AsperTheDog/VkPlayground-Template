@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <glm/ext/matrix_clip_space.hpp>
-#include <SDL2/SDL_mouse.h>
+#include <SDL3/SDL_mouse.h>
 
 OrthoControllerCamera::OrthoControllerCamera(const glm::vec3 p_Pos, const glm::vec3 p_Dir, const glm::vec3 p_Up, const glm::vec2 p_XBounds, const glm::vec2 p_YBounds, const float p_Near, const float p_Far)
     : OrthographicCamera(p_Pos, p_Dir, p_Up, p_XBounds, p_YBounds, p_Near, p_Far)
@@ -10,7 +10,7 @@ OrthoControllerCamera::OrthoControllerCamera(const glm::vec3 p_Pos, const glm::v
     recalculateUnitsPerPixel();
 }
 
-void OrthoControllerCamera::mouseMoved(const int32_t p_RelX, const int32_t p_RelY)
+void OrthoControllerCamera::mouseMoved(const float p_RelX, const float p_RelY)
 {
     if (!m_LeftMousePressed) return;
 
@@ -34,9 +34,9 @@ void OrthoControllerCamera::mouseButtonReleased(const uint32_t p_Button)
         m_LeftMousePressed = false;
 }
 
-void OrthoControllerCamera::mouseScrolled(const int32_t p_Y)
+void OrthoControllerCamera::mouseScrolled(const float p_Y)
 {
-    m_Zoom -= static_cast<float>(p_Y);
+    m_Zoom -= p_Y;
     m_Zoom = std::max(m_Zoom, 0.1f);
     recalculateUnitsPerPixel();
     setProjDirty();

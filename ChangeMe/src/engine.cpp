@@ -101,8 +101,7 @@ Engine::Engine() : m_Window("Vulkan", 1920, 1080)
     m_GraphicsCmdBufferID = l_Device.createCommandBuffer(l_GraphicsQueueFamily, 0, false);
 
     // Depth Buffer
-    VulkanMemoryAllocator::MemoryPreferences l_MemPrefs{
-        .usage = VMA_MEMORY_USAGE_AUTO,
+    VulkanMemoryAllocator::MemoryPreferences l_MemPrefs {
         .preferredProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
     };
     m_DepthBuffer = l_Device.createAndAllocateImage(l_MemPrefs, {VK_IMAGE_TYPE_2D, VK_FORMAT_D32_SFLOAT, { l_Swapchain.getExtent().width, l_Swapchain.getExtent().height, 1 }, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, 0});
@@ -166,8 +165,7 @@ Engine::Engine() : m_Window("Vulkan", 1920, 1080)
     }
     m_InFlightFenceID = l_Device.createFence(true);
 
-    
-    m_Window.getResizedSignal().connect(this, &Engine::recreateSwapchain);
+    m_Window.getPixelResizedSignal().connect(this, &Engine::recreateSwapchain);
 
     m_Camera.setScreenSize(l_Swapchain.getExtent().width, l_Swapchain.getExtent().height);
 

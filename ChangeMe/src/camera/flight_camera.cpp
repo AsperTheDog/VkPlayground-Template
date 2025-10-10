@@ -5,7 +5,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/transform.hpp>
 
-#include <SDL2/SDL_keycode.h>
+#include <SDL3/SDL_keycode.h>
 
 FlightCamera::FlightCamera(const glm::vec3 p_Pos, const glm::vec3 p_Dir, const glm::vec3 p_Up, const float p_Fov, const float p_Near, const float p_Far)
     : PerspectiveCamera(p_Pos, p_Dir, p_Up, p_Fov, p_Near, p_Far)
@@ -13,11 +13,11 @@ FlightCamera::FlightCamera(const glm::vec3 p_Pos, const glm::vec3 p_Dir, const g
     setMouseCaptured(true);
 }
 
-void FlightCamera::mouseMoved(const int32_t p_RelX, const int32_t p_RelY)
+void FlightCamera::mouseMoved(const float p_RelX, const float p_RelY)
 {
     if (!m_IsMouseCaptured) return;
-	m_Yaw += static_cast<float>(p_RelX) * m_MouseSensitivity;
-    m_Pitch += static_cast<float>(p_RelY) * m_MouseSensitivity;
+	m_Yaw += p_RelX * m_MouseSensitivity;
+    m_Pitch += p_RelY * m_MouseSensitivity;
 
     m_Pitch = std::min(m_Pitch, 89.0f);
     m_Pitch = std::max(m_Pitch, -89.0f);
@@ -47,16 +47,16 @@ void FlightCamera::keyPressed(const uint32_t p_Key)
     }
 	switch (p_Key)
 	{
-	case SDLK_w:
+	case SDLK_W:
 		m_WPressed = true;
 		break;
-	case SDLK_s:
+	case SDLK_S:
 		m_SPressed = true;
 		break;
-	case SDLK_a:
+	case SDLK_A:
 		m_APressed = true;
 		break;
-	case SDLK_d:
+	case SDLK_D:
 		m_DPressed = true;
 		break;
 	case SDLK_SPACE:
@@ -74,16 +74,16 @@ void FlightCamera::keyReleased(const uint32_t p_Key)
 {
 	switch (p_Key)
 	{
-	case SDLK_w:
+	case SDLK_W:
 		m_WPressed = false;
 		break;
-	case SDLK_s:
+	case SDLK_S:
 		m_SPressed = false;
 		break;
-	case SDLK_a:
+	case SDLK_A:
 		m_APressed = false;
 		break;
-	case SDLK_d:
+	case SDLK_D:
 		m_DPressed = false;
 		break;
 	case SDLK_SPACE:
@@ -131,9 +131,9 @@ void FlightCamera::updateEvents(const float p_Delta)
 	}
 }
 
-void FlightCamera::mouseScrolled(const int32_t p_Y)
+void FlightCamera::mouseScrolled(const float p_Y)
 {
     // Change moving speed
-    m_MovingSpeed = (1.f + static_cast<float>(p_Y) * 0.05f) * m_MovingSpeed;
+    m_MovingSpeed = (1.f + p_Y * 0.05f) * m_MovingSpeed;
     m_MovingSpeed = std::clamp(m_MovingSpeed, 0.5f, 300.0f);
 }

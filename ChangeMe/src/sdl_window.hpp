@@ -1,7 +1,6 @@
 #pragma once
-#include <SDL2/SDL_vulkan.h>
-#include <vector>
-#include <SDL2/SDL_keycode.h>
+#include <SDL3/SDL_vulkan.h>
+#include <SDL3/SDL_keycode.h>
 #include <Volk/volk.h>
 
 #include "utils/signal.hpp"
@@ -16,16 +15,18 @@ class SDLWindow
 public:
 	struct WindowSize
 	{
-		uint32_t width;
-		uint32_t height;
+		uint32_t width = 0;
+		uint32_t height = 0;
 
 		[[nodiscard]] VkExtent2D toExtent2D() const;
+
+        WindowSize() = default;
 		WindowSize(uint32_t p_Width, uint32_t p_Height);
 		WindowSize(Sint32 p_Width, Sint32 p_Height);
 	};
 
 	SDLWindow() = default;
-	SDLWindow(std::string_view p_Name, int p_Width, int p_Height, int p_Top = SDL_WINDOWPOS_CENTERED, int p_Left = SDL_WINDOWPOS_CENTERED, uint32_t p_Flags = SDL_WINDOW_SHOWN | SDL_WINDOW_MAXIMIZED | SDL_WINDOW_RESIZABLE);
+	SDLWindow(std::string_view p_Name, int p_Width, int p_Height, int p_Top = SDL_WINDOWPOS_CENTERED, int p_Left = SDL_WINDOWPOS_CENTERED, uint32_t p_Flags = SDL_WINDOW_MAXIMIZED | SDL_WINDOW_RESIZABLE);
 
 
 	[[nodiscard]] bool shouldClose() const;
@@ -50,12 +51,13 @@ public:
 	void shutdownImgui() const;
 
 	[[nodiscard]] Signal<VkExtent2D>& getResizedSignal();
-	[[nodiscard]] Signal<int32_t, int32_t>& getMouseMovedSignal();
+	[[nodiscard]] Signal<VkExtent2D>& getPixelResizedSignal();
+	[[nodiscard]] Signal<float, float>& getMouseMovedSignal();
 	[[nodiscard]] Signal<uint32_t>& getKeyPressedSignal();
 	[[nodiscard]] Signal<uint32_t>& getKeyReleasedSignal();
     [[nodiscard]] Signal<uint32_t>& getMouseButtonPressedSignal();
     [[nodiscard]] Signal<uint32_t>& getMouseButtonReleasedSignal();
-    [[nodiscard]] Signal<int32_t>& getMouseScrolledSignal();
+    [[nodiscard]] Signal<float>& getMouseScrolledSignal();
 	[[nodiscard]] Signal<float>& getEventsProcessedSignal();
     [[nodiscard]] Signal<bool>& getMouseCaptureChangedSignal();
 
@@ -68,12 +70,13 @@ private:
 
 	// Signals
 	Signal<VkExtent2D> m_ResizeSignal;      // WindowSize
-	Signal<int32_t, int32_t> m_MouseMoved;  // relX, relY, isMouseCaptured
+    Signal<VkExtent2D> m_PixelResizeSignal; // WindowSize
+	Signal<float, float> m_MouseMoved;      // relX, relY, isMouseCaptured
 	Signal<uint32_t> m_KeyPressed;          // key, isMouseCaptured
 	Signal<uint32_t> m_KeyReleased;         // key, isMouseCaptured
     Signal<uint32_t> m_MouseButtonPressed;  // button, isMouseCaptured
     Signal<uint32_t> m_MouseButtonReleased; // button, isMouseCaptured
-    Signal<int32_t> m_MouseScrolled;        // y, isMouseCaptured
+    Signal<float> m_MouseScrolled;          // y, isMouseCaptured
 	Signal<float> m_EventsProcessed;        // delta
     Signal<bool> m_MouseCaptureChanged;     // isMouseCaptured
 

@@ -26,13 +26,13 @@ public:
     glm::mat4& getInvProjMatrix();
     glm::mat4& getInvVPMatrix();
 
-	virtual void mouseMoved(int32_t p_RelX, int32_t p_RelY) {}
+	virtual void mouseMoved(float p_RelX, float p_RelY) {}
 	virtual void keyPressed(uint32_t p_Key) {}
 	virtual void keyReleased(uint32_t p_Key) {}
     virtual void mouseButtonPressed(uint32_t p_Button) {}
     virtual void mouseButtonReleased(uint32_t p_Button) {}
 	virtual void updateEvents(float p_Delta) {}
-    virtual void mouseScrolled(int32_t p_Y) {}
+    virtual void mouseScrolled(float p_Y) {}
 
     void setMouseCaptured(bool p_Captured);
 
