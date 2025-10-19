@@ -402,3 +402,4 @@ FodyWeavers.xsd
 */imgui.ini
 PredictedInputCache_ChangeMe_Debug_x64.dat
 PredictedInputCache_ChangeMe_Release_x64.dat
+/ChangeMe/shaders/cache

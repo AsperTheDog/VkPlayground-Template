@@ -102,7 +102,10 @@
     <ClInclude Include="submodule\include\ext\vulkan_external_memory.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="submodule\include\utils\vulkan_base.hpp">
+    <ClInclude Include="submodule\src\vulkan_base.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="submodule\src\shader_helper.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

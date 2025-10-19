@@ -320,11 +320,16 @@ void Engine::createPipelines()
     
 #ifndef _DEBUG
     VulkanShader l_Shader{0, false};
+    l_Shader.enableCache("shaders/cache/shader_release.bin");
 #else
     VulkanShader l_Shader{0, true};
+    l_Shader.enableCache("shaders/cache/shader_debug.bin");
 #endif
-    l_Shader.loadModule("shaders/shader.slang", "main");
-    l_Shader.linkAndFinalize();
+
+    l_Shader.setExpectedStages(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    l_Shader.addModule("shaders/shader.slang", "main");
+    l_Shader.compile();
 
 	const ResourceID l_VertexShader = l_Device.createShaderModule(l_Shader, VK_SHADER_STAGE_VERTEX_BIT);
 	const ResourceID l_FragmentShader = l_Device.createShaderModule(l_Shader, VK_SHADER_STAGE_FRAGMENT_BIT);

@@ -153,7 +153,7 @@
     <ClInclude Include="submodule\include\utils\shader_reflection.hpp" />
     <ClInclude Include="submodule\include\utils\signal.hpp" />
     <ClInclude Include="submodule\include\utils\string_utils.hpp" />
-    <ClInclude Include="submodule\include\utils\vulkan_base.hpp" />
+    <ClInclude Include="submodule\src\vulkan_base.hpp" />
     <ClInclude Include="submodule\include\vulkan_binding.hpp" />
     <ClInclude Include="submodule\include\vulkan_buffer.hpp" />
     <ClInclude Include="submodule\include\vulkan_command_buffer.hpp" />
@@ -169,6 +169,7 @@
     <ClInclude Include="submodule\include\vulkan_render_pass.hpp" />
     <ClInclude Include="submodule\include\vulkan_shader.hpp" />
     <ClInclude Include="submodule\include\vulkan_sync.hpp" />
+    <ClInclude Include="submodule\src\shader_helper.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="submodule\src\allocators.cpp" />
